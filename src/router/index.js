@@ -42,6 +42,11 @@ const router = new Router({
                     path:'table',
                     name:'table',
                     component:()=>import('../views/table')
+                },
+                {
+                    path: 'drag',
+                    name: 'drag',
+                    component: ()=>import('../views/dragCompo')
                 }
             ]
         },

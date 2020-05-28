@@ -1,6 +1,5 @@
 <template>
   <div class="app">
-    <h2>测试git 测试commit</h2>
     <router-view></router-view>
   </div>
 </template>

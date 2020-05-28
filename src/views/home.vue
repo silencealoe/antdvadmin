@@ -76,6 +76,11 @@
                         key:'3',
                         name:'table',
                         link:'/table'
+                    },
+                    {
+                        key: '4',
+                        name: '组件编排',
+                        link: '/drag'
                     }
                 ]
             }
