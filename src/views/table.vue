@@ -281,7 +281,7 @@
   }
 
 </script>
-<style>
+<style scoped>
   .antvtable{
     padding:20px;
     color:white
