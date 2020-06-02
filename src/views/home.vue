@@ -131,7 +131,7 @@
     z-index: 10;
   }
   .app-content{
-    min-height: calc(100vh - 135px);
+    /*min-height: calc(100vh - 135px);*/
   }
   #components-layout-demo-side .ant-layout-footer{
     background:rgb(48,48,49);
