@@ -47,6 +47,11 @@ const router = new Router({
                     path: 'drag',
                     name: 'drag',
                     component: ()=>import('../views/dragCompo')
+                },
+                {
+                    path: 'pages',
+                    name: 'pages',
+                    component: ()=>import('../views/dragPages')
                 }
             ]
         },

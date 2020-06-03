@@ -19,7 +19,7 @@
           <!--        <a-breadcrumb-item>User</a-breadcrumb-item>-->
           <!--        <a-breadcrumb-item>Bill</a-breadcrumb-item>-->
           <!--      </a-breadcrumb>-->
-          <div :style="{background: '#000' }" class="app-content">
+          <div :style="{background: '#fff',padding: '20px' }" class="app-content">
             <router-view></router-view>
           </div>
         </a-layout-content>
@@ -80,7 +80,7 @@
                     {
                         key: '4',
                         name: '组件编排',
-                        link: '/drag'
+                        link: '/pages'
                     }
                 ]
             }
@@ -131,6 +131,8 @@
     z-index: 10;
   }
   .app-content{
+    overflow: auto;
+    min-height: 600px;
     /*min-height: calc(100vh - 135px);*/
   }
   #components-layout-demo-side .ant-layout-footer{
