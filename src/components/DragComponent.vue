@@ -1,18 +1,18 @@
 <template>
   <div>
     <div style="width:100%;">
-      <vue-draggable-resizable
-        :w="1000"
-        :h="700"
-        :on-drag="onDragCallback"
-        :drag-handle="'.drag-parent'"
-        style="z-index: 1;"
-        :parent="true"
-        class="drag-container"
-        :resizable="false"
-        ref="parentDrage"
-      >
-        <div style="width: 1000px;height: 700px;position: relative;">
+<!--      <vue-draggable-resizable-->
+<!--        :w="900"-->
+<!--        :h="700"-->
+<!--        :on-drag="onDragCallback"-->
+<!--        :drag-handle="'.drag-parent'"-->
+<!--        style="z-index: 1;"-->
+<!--        :parent="true"-->
+<!--        class="drag-container"-->
+<!--        :resizable="false"-->
+<!--        ref="parentDrage"-->
+<!--      >-->
+        <div style="width: 900px;height: 700px;position: relative;margin: 0 auto" ref="parentDrage">
           <vue-draggable-resizable
             :w="140"
             :h="100"
@@ -33,21 +33,21 @@
             :y="item.y"
             :resizable="false"
             :parent="true"
-            v-for="(item, index) in datas"
+            v-for="(item) in datas"
             :key="item.key">
-            <div class="drag-box">
+            <div :class="['drag-box', (newDrag === item.value) && isSelect ?'new-drag' : '']">
               <div class="drag-content  drag-handle" @dblclick.stop="cardClick(item)">
-                <h2>{{item.title}}</h2>
-                <div class="content-source">来源: SME</div>
+                <h2>{{item.parent}} — {{item.title}}</h2>
+                <div class="content-source">来源: {{item.source}}</div>
                 <div class="badge">
                   <a-badge :count="item.count" :number-style="{ backgroundColor: '#f5574e' }"/>
                 </div>
               </div>
               <div class="operation">
-                <div class="operation-item" style="border-right: 1px solid #ccc" @click.stop="handleEdit">
+                <div class="operation-item" style="border-right: 1px solid #ccc" @click.stop="cardClick(item)">
                   <a-icon type="edit" class="operation-icon"/>
                 </div>
-                <div class="operation-item" @click.stop="handleDelete(index)">
+                <div class="operation-item" @click.stop="handleDelete(item)">
                   <a-icon type="delete" class="operation-icon"/>
                 </div>
               </div>
@@ -78,7 +78,7 @@
                 v-show="item.display"
                 :style="{ top: item.position, left: item.origin, width: item.lineLength}"
           />
-          <div class="common-line drag-parent" style="height:6px;position: absolute;top:50%;left: -10%;z-index: 0"
+          <div class="common-line" style="height:6px;position: absolute;top:50%;left: -10%;z-index: 0"
                ref="commonLine">
             <p class="line-name name-left">
               <span v-if="!showInputOne" @dblclick.stop="showInputOne = true">{{ tempName }}</span>
@@ -92,7 +92,7 @@
             </p>
           </div>
         </div>
-      </vue-draggable-resizable>
+<!--      </vue-draggable-resizable>-->
     </div>
   </div>
 </template>
@@ -111,6 +111,18 @@ export default {
         return ()=>{}
       }
     },
+    updateDrag: {
+      type: Function,
+      default() {
+          return ()=>{}
+      }
+    },
+    isSelect: {
+      type: Boolean,
+      default() {
+          return false
+      }
+    },
     dragData: {
         type: Array,
         default() {
@@ -126,6 +138,7 @@ export default {
           // curX: 0,
           // isTop: true,
           parentHeight: 0,
+          parentWidth: 0,
           dragHeight: 0,
           dragWidth: 0,
           busLineHeight: 0,
@@ -148,6 +161,8 @@ export default {
               'VLAN6': '#d43030'
           },
           datas: this.dragData,
+          newDrag: '',
+          storeData: {}
           // data: [
           //     {
           //         id: '1',
@@ -511,10 +526,13 @@ export default {
       },
       immediate: true
     },
-    'dragData': {
+    'dragData.length': {
         handler() {
-            console.log('改变了')
+            console.log('改变了', this.dragData[this.dragData.length - 1])
             this.datas = this.dragData
+            if(this.dragData.length) {
+              this.newDrag = this.dragData[this.dragData.length - 1].value
+            }
             this.init()
         },
         deep: true
@@ -537,37 +555,61 @@ export default {
     }
   },
   mounted() {
-    // console.log('refs', this.$refs.commonLine.style.height)
-    // console.log('common line', this.dragData)
-    // this.curY = 200
-    // localStorage.setItem('data', JSON.stringify(this.data))
+    console.log('isselct==', this.isSelect)
+    this.$emit('update:isSelect', false)
     this.init()
   },
   methods: {
       init() {
-          // this.data = JSON.parse(localStorage.getItem('data'))
-          console.log('初始化', this.dragData)
-          if (this.datas.length) {
+        console.log('初始化', this.datas)
+        this.storeDataTimer()
+        if (this.datas.length) {
           this.$nextTick(() => {
-          this.parentHeight = parseInt(this.$refs.parentDrage.style.height)
-          this.busLineHeight = parseInt(this.$refs.commonLine.style.height)
-          // console.log('parent', this.parentHeight)
-          // console.log('hei1111', this.busLineHeight)
-          // console.log('获取data', this.$refs.dragBox[0].height)
-          // console.log('height', this.$refs.dragBox[0])
-          this.dragHeight = this.$refs.dragBox[0].height
-          this.dragWidth = this.$refs.dragBox[0].width
-          // console.log('width', this.dragWidth)
-          this.datas.forEach(item => {
+            this.parentHeight = parseInt(this.$refs.parentDrage.style.height)
+            this.parentWidth = parseInt(this.$refs.parentDrage.style.width)
+            this.busLineHeight = parseInt(this.$refs.commonLine.style.height)
+            // console.log('parent 高 宽', this.parentHeight, this.parentWidth)
+            this.dragHeight = this.$refs.dragBox[0].height
+            this.dragWidth = this.$refs.dragBox[0].width
+            // console.log('width', this.dragHeight)
+            if (this.isSelect) {
+              this.getItemOffset(this.datas[this.datas.length - 1])
+            }
+            console.log('dataaa', this.datas)
+            this.datas.forEach(item => {
+              item.lineHeight = 100
+              item.zIndexNum = 10
               this.getLineHeight(item, item.x, item.y)
+              this.handleOnLine(item, item.x, item.y)
+              // this.getDragIndex(item, item.y)
+            })
           })
-          })
-          }
+        }
       },
-      // getTagColor (name) {
-      //     const str = name.substr(name.length-1,1)
-      //     console.log('截取', str)
-      // },
+      storeDataTimer() {
+          setTimeout(()=>{
+              localStorage.setItem('datas', JSON.stringify(this.datas))
+              this.storeDataTimer()
+          }, 5000)
+      },
+      getOffsetData () {
+          let x = Math.floor(Math.random()*(this.parentWidth - this.dragWidth))
+          let y = Math.floor(Math.random()*(this.parentHeight - this.dragHeight))
+          return {x, y}
+      },
+      getItemOffset(item){
+        item.zIndexNum = 16  // 新生成的Index最大
+        let randomData = this.getOffsetData()
+        console.log('随机x', randomData.x, randomData.y)
+        // arrOffset.forEach(item => {
+        //     if(item.x === randomData.x || item.y === randomData.y) {
+        //         randomData = this.getOffsetData()
+        //     }
+        // })
+        item.x= randomData.x
+        item.y= randomData.y
+        console.log('dataaa', this.datas)
+      },
       handleLeftBlur() {
           if (this.tempName.trim() === '') {
               this.tempName = this.storeName
@@ -587,55 +629,31 @@ export default {
           this.showInputTwo = false
       },
       handleEdit() {
-          alert('编辑')
+        alert('编辑')
       },
-      handleDelete(index) {
-          this.datas.splice(index, 1)
-          console.log('组件删除')
-          this.deleteFun()
+      handleDelete(item) {
+          // this.datas.splice(index, 1)
+          console.log('组件删除', item)
+          this.deleteFun(item)
           // some();
       },
       saveData () {
-        console.log('保存数据', this.data)
+        console.log('保存数据', this.datas)
       },
-      getDragIndex(item, x, y) { // 获取Z-Index
-          const res = this.datas.filter(item => { // 检测是否交叉
-              console.log('差', x - item.x)
-              const dis = x - item.x
-              if ((dis < (this.dragWidth / 2) && dis > 0) || (dis > -(this.dragWidth / 2) && dis < 0)) return true
-          })
-          // const newRes = JSON.parse(JSON.stringify(res))
-          if (res.length) {
-              const minRe = res.every(ite => { // y 小于所有交叉项的y 在最上面
-                  return ite.y > y
-              })
-              const maxRe = res.every(ite => { // y 大于所有交叉项的y 在最下面
-                  return ite.y < y
-              })
-              // if(res.length >= 2) {
-              //     console.log('不止一个')
-              //     newRes.sort((item1, item2) => { // 按 y 从小到大排序
-              //         return item1.y - item2.y
-              //     })
-              //     console.log('sorttt', newRes)
-              //     for(let i=0; i<newRes.length; i++) {
-              //         if((newRes[i].y < y && y< newRes[i+1].y) && y < 300) {
-              //             console.log('中间的')
-              //             item.zIndexNum = newRes[i].zIndexNum
-              //             newRes[i].zIndexNum -= 1
-              //         }
-              //     }
-              // }
-
-              if ((minRe && y < ((this.parentHeight / 2) - this.dragHeight)) || (maxRe && y > (this.parentHeight / 2))) {
-                  // console.log('最小')
-                  item.zIndexNum -= res.length
-              }
-              if ((maxRe && y < ((this.parentHeight / 2) - this.dragHeight)) || (minRe && y > (this.parentHeight / 2))) {
-                  item.zIndexNum += res.length
-              }
+      getDragIndex(item, y) { // 获取Z-Index 分层次不同zIndex不同
+          console.log('改变zindex', y, this.parentHeight*3/4)
+          if( (y< (this.parentHeight/6)) || (y >= (this.parentHeight*5/6)) ) {
+              console.log('aaaassd11++ 10')
+              item.zIndexNum = 10
           }
-          // console.log('有交叉了', this.data)
+          if(((y>= (this.parentHeight/6)) && (y< (this.parentHeight/3))) || (y>=(this.parentHeight*2/3) && y< (this.parentHeight*5/6)) ) {
+              console.log('12')
+              item.zIndexNum = 12
+          }
+          if((y>=(this.parentHeight/3)) && (y<(this.parentHeight*2/3))) {
+              console.log('15')
+              item.zIndexNum = 15
+          }
       },
       getRefLineParams(params) {
           const {vLine, hLine} = params
@@ -652,28 +670,43 @@ export default {
       onDragStartCallback(item, e) {
           console.log('拖拽开始', item, e)
       },
+      handleOnLine (item, x, y) {
+        const lineUpMin = (this.parentHeight / 2) - this.dragHeight - (this.dragHeight / 2)
+        const lineUpMax = (this.parentHeight / 2) - this.dragHeight + (this.dragHeight / 2)
+        const lineDownMax = (this.parentHeight / 2) + (this.dragHeight / 2) + this.busLineHeight
+        if (y >= lineUpMin && y < lineUpMax) { // 矩形在线的上半部分
+            item.lineHeight = 50
+            item.y = item.y - 50 - (item.y - ((this.parentHeight / 2) - this.dragHeight))
+        }
+        if (y >= lineUpMax && y < lineDownMax) { // 矩形在线的下半部分`
+            item.lineHeight = 50
+            item.y = lineDownMax
+        }
+      },
       onDragStop(item, x, y) {
           console.log('存储de', x, y)
           console.log('拖拽停止', item)
           console.log('aaaa', this.parentHeight)
+          this.newDrag = ''
           item.zIndexNum = 10
           item.y = y
           this.getLineHeight(item, x, y)
-          const lineUpMin = (this.parentHeight / 2) - this.dragHeight - (this.dragHeight / 2)
-          const lineUpMax = (this.parentHeight / 2) - this.dragHeight + (this.dragHeight / 2)
-          const lineDownMax = (this.parentHeight / 2) + (this.dragHeight / 2) + this.busLineHeight
-          if (y >= lineUpMin && y < lineUpMax) { // 矩形在线的上半部分
-              item.lineHeight = 50
-              item.y = item.y - 50 - (item.y - ((this.parentHeight / 2) - this.dragHeight))
-          }
-          if (y >= lineUpMax && y < lineDownMax) { // 矩形在线的下半部分
-              item.lineHeight = 50
-              item.y = lineDownMax
-          }
-          this.getDragIndex(item, x, y)
+          this.handleOnLine(item, x, y)
+          // const lineUpMin = (this.parentHeight / 2) - this.dragHeight - (this.dragHeight / 2)
+          // const lineUpMax = (this.parentHeight / 2) - this.dragHeight + (this.dragHeight / 2)
+          // const lineDownMax = (this.parentHeight / 2) + (this.dragHeight / 2) + this.busLineHeight
+          // if (y >= lineUpMin && y < lineUpMax) { // 矩形在线的上半部分
+          //     item.lineHeight = 50
+          //     item.y = item.y - 50 - (item.y - ((this.parentHeight / 2) - this.dragHeight))
+          // }
+          // if (y >= lineUpMax && y < lineDownMax) { // 矩形在线的下半部分
+          //     item.lineHeight = 50
+          //     item.y = lineDownMax
+          // }
+          this.getDragIndex(item, y)
       },
       getLineHeight(item, x, y) {
-          // console.log('sdfsd', this.dragHeight)
+          console.log('sdfsd', this.dragHeight)
           const lineUp = (this.parentHeight / 2) - this.dragHeight
           const lineDown = (this.parentHeight / 2) + this.busLineHeight
           if (y > lineUp && y < lineDown) { // 矩形在线上时
@@ -688,19 +721,15 @@ export default {
           // console.log('获取高度', item, x, y)
       },
       dragging(item, x, y) {
-          // item.zIndexNum = 20
+          item.zIndexNum = 20
           this.getLineHeight(item, x, y)
           item.y = y
           item.x = x
       },
-      save() {
-          console.log('保存', this.data)
-          localStorage.setItem('data', JSON.stringify(this.data))
-          this.init()
-      },
       cardClick(item) {
           console.log('ssss', item)
           this.$emit('showDrawer', true)
+          this.updateDrag(item)
           // alert(item.name)
       }
     }
@@ -723,6 +752,9 @@ export default {
     position: relative;
     background: white;
     box-shadow: 0px 0px 10px 2px #cccccc;
+  }
+  .new-drag {
+    box-shadow: 0px 0px 10px 2px #000;
   }
 
   .drag-container {
@@ -783,7 +815,7 @@ export default {
   .common-line {
     width: 120%;
     margin: 0 auto;
-    background: bisque;
+    background: black;
   }
 
   .drag-wrap {
