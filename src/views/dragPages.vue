@@ -4,12 +4,12 @@
       <a-tabs default-active-key="1" @change="callback">
         <a-tab-pane key="1" tab="拓扑结构">
           <a-row style="margin-bottom: 20px">
-            <a-col :span="7">
+            <a-col :span="12">
               <span style="margin-right: 10px">镜像搜索:</span>
               <a-tree-select
                 v-model="value"
                 show-search
-                style="width: 80%"
+                style="min-width: 50%;max-width: 100%"
                 :tree-data="treeData"
                 allow-clear
                 multiple
@@ -21,13 +21,20 @@
                 placeholder="请选择镜像"
               />
             </a-col>
-            <a-col :span="17" align="right">
+            <a-col :span="12" align="right">
               <a-button @click="save" type="primary">保存</a-button>
             </a-col>
           </a-row>
           <a-row style="position: relative;background: #f6f6f6;padding: 15px;min-height: 600px">
             <a-col>
-              <DragComponent :deleteFun="deleteFun" :updateDrag="updateDrag" ref="dragChild" @showDrawer="showDrawer" :dragData="selectDatas" :isSelect.sync="isSelect"></DragComponent>
+              <DragComponent
+                :deleteFun="deleteFun"
+                :updateDrag="updateDrag"
+                ref="dragChild"
+                :dragData="selectDatas"
+                :isSelect.sync="isSelect"
+                @dragClick="dragClick"
+              ></DragComponent>
             </a-col>
           </a-row>
         </a-tab-pane>
@@ -45,6 +52,7 @@
 <script>
 import DragDrawer from "../components/DragDrawer";
 import DragComponent from "../components/DragComponent";
+import axios from 'axios'
 export default {
   name: 'dragPages',
   components: {
@@ -275,39 +283,43 @@ export default {
   },
   methods: {
     init () {
-        this.selectDatas = [
-            {
-                parent: 'EOP',
-                title: 'SI',
-                value: '25',
-                key: '25',
-                count: 10,
-                source: 'SME',
-                lineHeight: 100,
-                zIndexNum: 10,
-                x: 200,
-                y: 200,
-                labels: [
-                    {
-                        id: '1',
-                        name: 'VLAN2'
-                    },
-                    {
-                        id: '2',
-                        name: 'VLAN3'
-                    },
-                    {
-                        id: '3',
-                        name: 'VLAN4'
-                    }
-                ]
+        // this.selectDatas = [
+        //     {
+        //         parent: 'EOP',
+        //         title: 'SI',
+        //         value: '25',
+        //         key: '25',
+        //         count: 10,
+        //         source: 'SME',
+        //         lineHeight: 100,
+        //         zIndexNum: 10,
+        //         x: 200,
+        //         y: 200,
+        //         labels: [
+        //             {
+        //                 id: '1',
+        //                 name: 'VLAN2'
+        //             },
+        //             {
+        //                 id: '2',
+        //                 name: 'VLAN3'
+        //             },
+        //             {
+        //                 id: '3',
+        //                 name: 'VLAN4'
+        //             }
+        //         ]
+        //     }
+        // ] // 从接口中取数据
+        axios.get('http://rap2.taobao.org:38080/app/mock/249262/componentData').then(res => {
+            console.log('获取的数据',res.data.data)
+            this.selectDatas = res.data.data
+            if (this.selectDatas.length) {
+                this.value = this.selectDatas.map(item=>{
+                    return item.value
+                })
             }
-        ] // 从接口中取数据
-        if (this.selectDatas.length) {
-           this.value = this.selectDatas.map(item=>{
-               return item.value
-           })
-        }
+        })
     },
     callback(){},
     onClose() {
@@ -319,7 +331,7 @@ export default {
     },
     save() {
         console.log('children', this.selectDatas) // 改变后的数据
-        // this.$refs.dragChild.saveData()
+        this.$refs.dragChild.saveData()
     },
     onselect(val, e) {
       console.log(val)
@@ -349,12 +361,17 @@ export default {
             this.selectDatas = []
         }
     },
+    dragClick(item) { // 点击每一个dragcom
+        console.log('canshu', item)
+        this.visible = true
+    },
     fillterFun (searchVal, treeNode) {
       console.log(treeNode)
       return treeNode.data.props.title.includes(searchVal)
     },
     updateDrag (item) {
         console.log('编辑的数据', item)
+        this.$message.warn(`编辑的数据${item}`)
     },
     deleteFun(item) {
         this.isSelect = false

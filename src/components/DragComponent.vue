@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div style="width:100%;">
+    <div style="min-width:1400px;user-select: none">
 <!--      <vue-draggable-resizable-->
 <!--        :w="900"-->
 <!--        :h="700"-->
@@ -12,7 +12,7 @@
 <!--        :resizable="false"-->
 <!--        ref="parentDrage"-->
 <!--      >-->
-        <div style="width: 900px;height: 700px;position: relative;margin: 0 auto" ref="parentDrage">
+        <div style="width: 1200px;height: 700px;position: relative;margin: 0 auto" ref="parentDrage">
           <vue-draggable-resizable
             :w="140"
             :h="100"
@@ -44,7 +44,7 @@
                 </div>
               </div>
               <div class="operation">
-                <div class="operation-item" style="border-right: 1px solid #ccc" @click.stop="cardClick(item)">
+                <div class="operation-item" style="border-right: 1px solid #ccc" @click.stop="handleEdit(item)">
                   <a-icon type="edit" class="operation-icon"/>
                 </div>
                 <div class="operation-item" @click.stop="handleDelete(item)">
@@ -54,8 +54,6 @@
               <div class="box-labels" v-if="item.labels">
                 <a-tag :color="labelColors[tags.name]" v-for="tags in item.labels" :key="tags.id">{{tags.name}}
                 </a-tag>
-                <!--                <a-tag color="#43cf7c">VLAN4</a-tag>-->
-                <!--                <a-tag color="#000">VLAN5</a-tag>-->
               </div>
               <div class="footer" v-if="item.count > 1"></div>
               <p
@@ -147,6 +145,7 @@ export default {
           storeHeight: 0,
           vLine: [],
           hLine: [],
+          isSave: false,
           showInputOne: false,
           showInputTwo: false,
           storeName: '总线',
@@ -562,7 +561,10 @@ export default {
   methods: {
       init() {
         console.log('初始化', this.datas)
-        this.storeDataTimer()
+        // this.storeDataTimer()  // 保存到local
+        // if(JSON.parse(localStorage.getItem('datas')).length) {
+        //   this.datas = JSON.parse(localStorage.getItem('datas'))
+        // }
         if (this.datas.length) {
           this.$nextTick(() => {
             this.parentHeight = parseInt(this.$refs.parentDrage.style.height)
@@ -581,13 +583,14 @@ export default {
               item.zIndexNum = 10
               this.getLineHeight(item, item.x, item.y)
               this.handleOnLine(item, item.x, item.y)
-              // this.getDragIndex(item, item.y)
+              this.getDragIndex(item, item.y)
             })
           })
         }
       },
       storeDataTimer() {
           setTimeout(()=>{
+              console.log('已保存')
               localStorage.setItem('datas', JSON.stringify(this.datas))
               this.storeDataTimer()
           }, 5000)
@@ -628,8 +631,8 @@ export default {
           this.tempName = this.tempRightName
           this.showInputTwo = false
       },
-      handleEdit() {
-        alert('编辑')
+      handleEdit(item) {
+        this.updateDrag(item)
       },
       handleDelete(item) {
           // this.datas.splice(index, 1)
@@ -692,17 +695,6 @@ export default {
           item.y = y
           this.getLineHeight(item, x, y)
           this.handleOnLine(item, x, y)
-          // const lineUpMin = (this.parentHeight / 2) - this.dragHeight - (this.dragHeight / 2)
-          // const lineUpMax = (this.parentHeight / 2) - this.dragHeight + (this.dragHeight / 2)
-          // const lineDownMax = (this.parentHeight / 2) + (this.dragHeight / 2) + this.busLineHeight
-          // if (y >= lineUpMin && y < lineUpMax) { // 矩形在线的上半部分
-          //     item.lineHeight = 50
-          //     item.y = item.y - 50 - (item.y - ((this.parentHeight / 2) - this.dragHeight))
-          // }
-          // if (y >= lineUpMax && y < lineDownMax) { // 矩形在线的下半部分
-          //     item.lineHeight = 50
-          //     item.y = lineDownMax
-          // }
           this.getDragIndex(item, y)
       },
       getLineHeight(item, x, y) {
@@ -718,7 +710,6 @@ export default {
           } else if (y > lineDown) {
               item.lineHeight = y - lineDown
           }
-          // console.log('获取高度', item, x, y)
       },
       dragging(item, x, y) {
           item.zIndexNum = 20
@@ -727,10 +718,7 @@ export default {
           item.x = x
       },
       cardClick(item) {
-          console.log('ssss', item)
-          this.$emit('showDrawer', true)
-          this.updateDrag(item)
-          // alert(item.name)
+          this.$emit('dragClick',item)
       }
     }
 }
