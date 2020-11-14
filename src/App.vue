@@ -11,6 +11,7 @@
           }
       },
       mounted() {
+         this.$router.push('/')
           console.log('sdfsdg', this.$store.state)
       }
 
